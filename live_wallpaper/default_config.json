@@ -1,0 +1,24 @@
+{
+    "log_level": "DEBUG",
+    "log_path": "",
+    "module":{
+        "module_name": "Himawari8",
+        "module_interval": "15",
+        "module_config": {
+            "level": 2,
+            "percent": 0.8,
+            "image_size": 550,
+            "image_path": ""
+        }
+    },
+    "system":{
+        "change_wallpaper_bash": "dbus-send --dest=com.deepin.daemon.Appearance /com/deepin/daemon/Appearance --print-reply com.deepin.daemon.Appearance.SetMonitorBackground string:\"{display}\" string:\"file://{file}\"",
+        "change_wallpaper_bash_bak": "qdbus --literal com.deepin.wm /com/deepin/wm com.deepin.wm.ChangeCurrentWorkspaceBackground file://{}",
+        "set_wallpaper_bash": "gsettings get com.deepin.dde.appearance background-uris",
+        "crontab_comment": "live-wallpaper-crontab-comment",
+        "rm_bash": "",
+        "nice_bash": "",
+        "cpu_limit_bash": "",
+        "rm_time": "60"
+    }
+}
