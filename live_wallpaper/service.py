@@ -1,8 +1,7 @@
-import argparse
 import datetime
 import os
 import sys
-from typing import Any, Optional
+from typing import Optional
 
 from croniter.croniter import croniter  # type: ignore
 from crontab import CronItem, CronTab
@@ -16,7 +15,7 @@ class Service(object):
     cron: CronTab = CronTab(user=get_current_user())
 
     def __init__(self) -> None:
-        self.crontab_comment: str = config.system.crontab_comment
+        self.crontab_comment: str = "live-wallpaper"
         self.crontab_bash: str = "{} {}".format(sys.executable, os.path.realpath(wallpaper.__file__))
 
     def _search_job(self) -> Optional[CronItem]:
@@ -25,72 +24,55 @@ class Service(object):
                 return job
         return None
 
-    def _status(self, job: Optional[CronItem] = None) -> None:
+    def _status(self, job: Optional[CronItem] = None) -> str:
         job = self._search_job() if job is None else job
+        return_str: str = ""
         if job:
             schedule: croniter = job.schedule(date_from=datetime.datetime.now())
-            self.output(f"job: {job.comment}")
-            self.output(f"job bash: {job.command}")
-            self.output(f"last run time: {schedule.get_prev()} next run time: {schedule.get_next()}")
+            return_str += (
+                f"job: {job.comment}\n"
+                f"job bash: {job.command}\n"
+                f"module: {config.module.module_name} \n"
+                f"last run time: {schedule.get_prev()} next run time: {schedule.get_next()}\n"
+            )
         else:
-            self.output("The service has stopped, you can start running the service with `start`")
-
-    def output(self, msg: str) -> None:
-        print(msg)
+            return_str += "The service has stopped, you can start running the service with `start`\n"
+        return return_str
 
     ############
     # user api #
     ############
-    def status(self) -> None:
+    def status(self) -> str:
         """View service running status"""
-        self.output(f"user: {get_current_user()}")
-        self._status()
-        self.output(f"\nlearn more run info from log path: {config_filename}")
+        return_str: str = ""
+        return_str += f"user: {get_current_user()}\n"
+        return_str += self._status()
+        return_str += f"\nlearn more run info from log path: {config_filename}\n"
+        return return_str
 
-    def start(self) -> None:
+    def start(self) -> str:
         """start server"""
         job: Optional[CronItem] = self._search_job()
         if job:
-            self.output("The service has been started, you can stop the service with `stop` or view it with `status`")
+            return "The service has been started, you can stop the service with `stop` or view it with `status`"
         else:
             job = self.cron.new(command=self.crontab_bash, comment=self.crontab_comment)
             job.minute.every(15)
             self.cron.write()
-            self._status(job)
+            return self._status(job)
 
-    def stop(self) -> None:
+    def stop(self) -> str:
         """stop server"""
         job: Optional[CronItem] = self._search_job()
         if job:
             self.cron.remove(job)
             self.cron.write()
-            self._status(job)
+            return self._status(job)
         else:
-            self.output("The current task has stopped, you can start running the task with `start`")
+            return "The current task has stopped, you can start running the task with `start`"
 
     def doctor(self) -> None:
         """Check service running dependencies"""
 
     def config(self) -> None:
         """view&update config"""
-
-
-if __name__ == "__main__":
-    parser: argparse.ArgumentParser = argparse.ArgumentParser()
-    parser.add_argument(dest="method", metavar="method", nargs="*", help="lalala")
-
-    args: Any = parser.parse_args()
-    service: Service = Service()
-
-    try:
-        method = args.method[0]
-        if method == "start":
-            service.start()
-        elif method == "status":
-            service.status()
-        elif method == "stop":
-            service.stop()
-        else:
-            service.output("use -h to show help message and exit")
-    except IndexError:
-        service.output("use -h to show help message and exit")

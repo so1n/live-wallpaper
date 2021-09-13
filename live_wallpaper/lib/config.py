@@ -178,9 +178,9 @@ class Config:
         annotation_dict: Dict[str, Tuple[Any, ...]] = {}
         for _class in self.__class__.mro():
             for key in getattr(_class, "__annotations__", []):
-                if key != key.upper():
-                    class_name: str = _class.__name__
-                    raise KeyError(f"key: {class_name}.{key} must like {class_name}.{key.upper()}")
+                # if key != key.upper():
+                #     class_name: str = _class.__name__
+                #     raise KeyError(f"key: {class_name}.{key} must like {class_name}.{key.upper()}")
 
                 default_value: Any = getattr(self, key, ...)
                 annotation: Union[str, Type] = _class.__annotations__[key]
@@ -221,6 +221,9 @@ class Config:
             cf: "ConfigParser" = ConfigParser()
             cf.read(file_name)
             self._config_dict = {key.upper(): value for key, value in cf.items()}
+        elif file_name.endswith(".json"):
+            with open(file_name) as input_file:
+                self._config_dict = json.load(input_file)
         else:
             try:
                 name, suffix = file_name.split(".")
