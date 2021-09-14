@@ -205,7 +205,10 @@ class Config:
             **annotation_dict,
         )
         self._model = dynamic_model(**self._config_dict)
-        self.__dict__.update(self._model.dict())
+
+        for _class in self.__class__.mro():
+            for key in getattr(_class, "__annotations__", []):
+                self.__dict__[key] = getattr(self._model, key)
 
     @property
     def model(self) -> BaseModel:
