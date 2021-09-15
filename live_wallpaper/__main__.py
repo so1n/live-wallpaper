@@ -59,6 +59,7 @@ def config(
     if output_format:
         if not config_exists:
             return
+        echo()
         if output_format == "json":
             echo(_config.model.json(indent=2))
         elif output_format == "yaml":
