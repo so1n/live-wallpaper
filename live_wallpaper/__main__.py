@@ -1,32 +1,61 @@
+import datetime
+import os
 import pathlib
 import sys
+from typing import Optional
 
 import yaml  # type: ignore
+from croniter.croniter import croniter  # type: ignore
+from crontab import CronItem, CronTab
 from typer import Abort, Option, Typer, colors, confirm, echo, style
 
+from live_wallpaper import wallpaper
 from live_wallpaper.config import config as _config
 from live_wallpaper.config import config_filename, default_config_filename, reset_config
-from live_wallpaper.service import Service, get_current_user
+from live_wallpaper.lib.current_user import get_current_user
 
 app: Typer = Typer()
-service: Service = Service()
+cron: CronTab = CronTab(user=get_current_user())
+crontab_comment: str = "live-wallpaper"
+crontab_bash: str = "{} {}".format(sys.executable, os.path.realpath(wallpaper.__file__))
+
+
+def search_job() -> Optional[CronItem]:
+    for job in cron:
+        if job.comment == crontab_comment:
+            return job
+    return None
 
 
 @app.command(name="start")
 def start_service() -> None:
     """Start service (load bash into crontab file)"""
-    # service.start()
+    job: Optional[CronItem] = search_job()
+    if job:
+        echo("Status: " + style("The service has been started", fg=colors.GREEN, bold=True))
+    else:
+        job = cron.new(command=crontab_bash, comment=crontab_comment)
+        job.minute.every(15)
+        cron.write()
+        echo(style("Service start success", fg=colors.GREEN, bold=True))
+    echo("You can stop the service with `stop` or view it with `status`")
 
 
 @app.command(name="status")
 def service_status() -> None:
     """View the operation details of the service"""
     echo(f"User: {style(get_current_user(), fg=colors.GREEN, bold=True)}")
-    echo(f"Model: {style(_config.module.module_name, fg=colors.GREEN, bold=True)}")
+    echo(f"Wallpaper model: {style(_config.module.module_name, fg=colors.GREEN, bold=True)}")
     echo(f"Python venv: {style(sys.executable, fg=colors.GREEN, bold=True)}")
-    status_str, has_job = service.status()
-    if not has_job:
-        echo(f"Status: {style('Service Fail', fg=colors.RED, bold=True)} ({status_str})")
+
+    job: Optional[CronItem] = search_job()
+    if job:
+        schedule: croniter = job.schedule(date_from=datetime.datetime.now())
+        echo(f"Service status: {style('running', fg=colors.GREEN, bold=True)}")
+        echo(f"Job bash:{job.command}")
+        echo(f"last run time: {schedule.get_prev()} next run time: {schedule.get_next()}\n")
+    else:
+        echo(f"Service Status: {style('Fail', fg=colors.RED, bold=True)} (The service has stopped)")
         echo(style("---------------------------------------", fg=colors.BRIGHT_BLACK, bold=True))
         is_start: bool = confirm("Do you want to start?")
         if is_start:
@@ -36,7 +65,13 @@ def service_status() -> None:
 @app.command(name="stop")
 def stop_service() -> None:
     """Stop service (remote bash from crontab file)"""
-    # service.stop()
+    job: Optional[CronItem] = search_job()
+    if job:
+        cron.remove(job)
+        cron.write()
+        echo("Stop service success")
+    else:
+        echo("The current service has been closed")
 
 
 @app.command(name="config", no_args_is_help=True)
