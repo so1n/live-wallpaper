@@ -7,10 +7,11 @@ from typing import Optional
 from PIL import Image
 from requests import Response  # type: ignore
 
-from live_wallpaper.config import config
+from live_wallpaper.config import Config, get_config
 from live_wallpaper.lib import get_resolution, request_get
 from live_wallpaper.module.base import BaseWallpaperModule
 
+config: Config = get_config()
 LOGGER: logging.Logger = logging.getLogger(__name__)
 
 

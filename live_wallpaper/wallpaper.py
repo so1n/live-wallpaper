@@ -4,11 +4,12 @@ import subprocess
 from typing import Optional, Tuple
 
 from live_wallpaper import module
-from live_wallpaper.config import config
+from live_wallpaper.config import Config, get_config
 from live_wallpaper.lib.bash import bash
 from live_wallpaper.lib.log import init_logging
 from live_wallpaper.lib.path import get_file_path
 
+config: Config = get_config()
 init_logging(config.log_path, config.log_level)
 LOGGER: logging.Logger = logging.getLogger(__name__)
 

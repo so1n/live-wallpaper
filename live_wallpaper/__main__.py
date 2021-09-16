@@ -1,5 +1,4 @@
 import datetime
-import os
 import pathlib
 import sys
 from typing import Optional
@@ -9,15 +8,20 @@ from croniter.croniter import croniter  # type: ignore
 from crontab import CronItem, CronTab
 from typer import Abort, Option, Typer, colors, confirm, echo, style
 
-from live_wallpaper import wallpaper
-from live_wallpaper.config import config as _config
-from live_wallpaper.config import config_filename, default_config_filename, reset_config
+from live_wallpaper.config import (
+    Config,
+    config_filename,
+    default_config_filename,
+    get_config,
+    project_path,
+    reset_config,
+)
 from live_wallpaper.lib.current_user import get_current_user
 
 app: Typer = Typer()
 cron: CronTab = CronTab(user=get_current_user())
 crontab_comment: str = "live-wallpaper"
-crontab_bash: str = "{} {}".format(sys.executable, os.path.realpath(wallpaper.__file__))
+crontab_bash: str = "{} {}".format(sys.executable, project_path + "/wallpaper.py")
 
 
 def search_job() -> Optional[CronItem]:
@@ -45,7 +49,12 @@ def start_service() -> None:
 def service_status() -> None:
     """View the operation details of the service"""
     echo(f"User: {style(get_current_user(), fg=colors.GREEN, bold=True)}")
-    echo(f"Wallpaper model: {style(_config.module.module_name, fg=colors.GREEN, bold=True)}")
+    try:
+        _config: Config = get_config()
+        echo(f"Wallpaper model: {style(_config.module.module_name, fg=colors.GREEN, bold=True)}")
+    except Exception:
+        echo(f"Wallpaper model: {style(f'load config fail, please check:{config_filename}', fg=colors.RED, bold=True)}")
+
     echo(f"Python venv: {style(sys.executable, fg=colors.GREEN, bold=True)}")
 
     job: Optional[CronItem] = search_job()
@@ -95,6 +104,14 @@ def config(
         if not config_exists:
             return
         echo()
+
+        try:
+            _config: Config = get_config()
+        except Exception:
+            echo({style(f"load config fail, please check:{config_filename}", fg=colors.RED, bold=True)})
+            return
+
+        echo("")
         if output_format == "json":
             echo(_config.model.json(indent=2))
         elif output_format == "yaml":
@@ -130,7 +147,6 @@ def config(
 @app.command()
 def doctor() -> None:
     """Check the operating environment status"""
-    echo(_config.module.json())
 
 
 if __name__ == "__main__":

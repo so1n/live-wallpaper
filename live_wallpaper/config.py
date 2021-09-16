@@ -7,10 +7,10 @@ from pydantic import BaseModel
 from live_wallpaper.lib.config import Config as _Config
 from live_wallpaper.lib.current_user import get_current_user
 
-current_file_path: str = os.path.split(os.path.realpath(__file__))[0]
+project_path: str = os.path.split(os.path.realpath(__file__))[0]
 config_path: str = f"/home/{get_current_user()}/.config/live-wallpaper/"
 config_filename: str = f"/home/{get_current_user()}/.config/live-wallpaper/live-wallpaper.json"
-default_config_filename: str = f"{current_file_path}/default_config.json"
+default_config_filename: str = f"{project_path}/default_config.json"
 cache_path: str = f"/home/{get_current_user()}/.cache/live-wallpaper/"
 
 config_path_ojb: pathlib.Path = pathlib.Path(config_path)
@@ -55,4 +55,5 @@ class Config(_Config):
     system: SystemConfigModel
 
 
-config: Config = Config(config_filename)
+def get_config() -> Config:
+    return Config(config_filename)
