@@ -4,13 +4,12 @@ import subprocess
 from typing import Optional, Tuple
 
 from live_wallpaper import module
-from live_wallpaper.config import Config, get_config
+from live_wallpaper.config import Config, cache_image_path, get_config
 from live_wallpaper.lib.bash import bash
-from live_wallpaper.lib.log import init_logging
-from live_wallpaper.lib.path import get_file_path
+from live_wallpaper.lib.log import init_file_logging
 
 config: Config = get_config()
-init_logging(config.log_path, config.log_level)
+init_file_logging(config.log_path, config.log_level)
 LOGGER: logging.Logger = logging.getLogger(__name__)
 
 
@@ -19,7 +18,6 @@ class Wallpaper(object):
 
     def __init__(self) -> None:
         self.path_filename: Optional[str] = None
-        self.path = get_file_path(__file__) + "/"
 
     @staticmethod
     def set_environ() -> None:
@@ -40,8 +38,9 @@ class Wallpaper(object):
         LOGGER.info(f"{self.module.SITE}> Now wallpaper:{wallpaper_result_list}")
 
     def gen_filename(self, wallpaper_id: str) -> Tuple[str, str]:
+        wallpaper_id = wallpaper_id.replace("/", "_")
         filename: str = wallpaper_id + ".png"
-        path_filename: str = self.path + "images/" + self.module.SITE + "_" + filename
+        path_filename: str = cache_image_path + self.module.SITE + "_" + filename
         return filename, path_filename
 
     @staticmethod
@@ -60,7 +59,11 @@ class Wallpaper(object):
             else:
                 LOGGER.error("exec rm fail, please run doctor check config.json")
                 return
-            bash("find {path}images/ -name '*.png' {rm_time} | xargs rm".format(path=self.path, rm_time=rm_time))
+            bash(
+                "find {path} -name '*.png' {rm_time} | xargs rm".format(
+                    path=cache_image_path + self.module.SITE, rm_time=rm_time
+                )
+            )
 
     def run(self) -> None:
         self.set_environ()

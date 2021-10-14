@@ -12,13 +12,15 @@ config_path: str = f"/home/{get_current_user()}/.config/live-wallpaper/"
 config_filename: str = f"/home/{get_current_user()}/.config/live-wallpaper/live-wallpaper.json"
 default_config_filename: str = f"{project_path}/default_config.json"
 cache_path: str = f"/home/{get_current_user()}/.cache/live-wallpaper/"
+cache_image_path: str = f"/home/{get_current_user()}/.cache/live-wallpaper/images/"
 
 config_path_ojb: pathlib.Path = pathlib.Path(config_path)
 cache_path_obj: pathlib.Path = pathlib.Path(cache_path)
-if not cache_path_obj.exists():
-    cache_path_obj.mkdir(parents=True)
-if not config_path_ojb.exists():
-    config_path_ojb.mkdir(parents=True)
+cache_image_path_obj: pathlib.Path = pathlib.Path(cache_image_path)
+
+for path_obj in [config_path_ojb, cache_path_obj, cache_image_path_obj]:
+    if not path_obj.exists():
+        path_obj.mkdir(parents=True)
 
 
 def reset_config(filename: Optional[str] = None) -> None:

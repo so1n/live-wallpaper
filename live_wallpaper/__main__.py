@@ -17,6 +17,7 @@ from live_wallpaper.config import (
     reset_config,
 )
 from live_wallpaper.lib.current_user import get_current_user
+from live_wallpaper.lib.log import init_logging
 
 app: Typer = Typer()
 cron: CronTab = CronTab(user=get_current_user())
@@ -142,6 +143,18 @@ def config(
             reset_config()
         else:
             Abort("Cancel reset config from filename")
+
+
+@app.command()
+def run() -> None:
+    """Execute the task immediately"""
+    is_run: bool = confirm("Are you run live wallpaper now?")
+    if is_run:
+        init_logging(get_config().log_level)
+
+        from .wallpaper import Wallpaper
+
+        Wallpaper().run()
 
 
 @app.command()
