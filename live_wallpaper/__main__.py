@@ -126,7 +126,9 @@ def config(
             msg = "Do you want to create default config?"
         is_reset: bool = confirm(msg)
         if is_reset:
-            reset_config()
+            reset_msg: Optional[str] = reset_config()
+            if reset_msg:
+                echo(style(reset_msg, fg=colors.RED, bold=True))
         else:
             Abort("Cancel reset config")
 
@@ -140,7 +142,9 @@ def config(
             msg = "Do you want to create default config?"
         is_reset = confirm(msg)
         if is_reset:
-            reset_config()
+            reset_msg = reset_config()
+            if reset_msg:
+                echo(style(reset_msg, fg=colors.RED, bold=True))
         else:
             Abort("Cancel reset config from filename")
 
